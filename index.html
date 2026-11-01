@@ -1,4 +1,4 @@
-<!doctype html><html lang="fa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="4A-dic"></head><body><title>4A-dic</title>
+<title>4A-dic</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: iOS-like tab app — stacked screens over a fixed bottom tab bar */
@@ -348,7 +348,9 @@ document.addEventListener('click', e => {
   const tok = e.target.closest('.tok');
   if (tok) { showToken(tok.dataset.t); return; }
   const w = e.target.closest('[data-word]');
-  if (w && !e.target.closest('[data-noopen]')) { const word = BY_ID.get(w.dataset.word); if (word) openWord(word); return; }
+  const inf = e.target.closest('[data-info]');
+  if (inf) { e.stopPropagation(); const word = BY_ID.get(inf.dataset.info); if (word) openWord(word); return; }
+  if (w && !e.target.closest('[data-noopen]')) { const word = BY_ID.get(w.dataset.word); if (word) { const site = activeSite(); if (site) { recordSearch(word.de); openSite(siteURL(site, word.de)); } else openWord(word); } return; }
   if (!e.target.closest('#tokcard')) hideTok();
 }, true);
 
@@ -369,7 +371,7 @@ function homeHTML(){
           <button class="plus orange" data-addw="${esc(q)}" aria-label="افزودن به واژه‌نامه">${I.plusO}</button></div>`;
       }).join('')}
     </div>` : '';
-  return `<div class="nav"><h1>خانه</h1></div>
+  return `<div class="nav"><h1>خانه</h1><div class="side end"><button class="link" id="goSites" aria-label="تنظیم دیکشنری و سایت‌ها" style="font-size:22px">${I.web.replace('<svg','<svg width="22" height="22"')}</button></div></div>
   <div class="scroll">
     <button class="hero a" id="goLeit"><div style="flex:1"><div class="t">جعبه لایتنر</div><div class="s">${due===0 ? 'امروز کارتی برای مرور نیست' : `امروز ${Math.min(due,dailyLimit)} کارت منتظر مرور است`}</div></div>${I.stack}</button>
     <button class="hero b" id="goDict"><div style="flex:1"><div class="t">واژه‌نامه</div><div class="s">${ALL.length} واژه — جستجوی آلمانی و فارسی</div></div>${I.book}</button>
@@ -381,6 +383,7 @@ function homeHTML(){
 function bindHome(el){
   el.querySelector('#goLeit').onclick = () => setTab('leit');
   el.querySelector('#goDict').onclick = () => setTab('dict');
+  el.querySelector('#goSites').onclick = () => push(sitesScreen());
   const c = el.querySelector('#clearRecent'); if (c) c.onclick = () => { recent = []; save('recent', recent); render(); };
   el.querySelectorAll('[data-addl]').forEach(b => b.onclick = e => { e.stopPropagation(); addLeit(BY_ID.get(b.dataset.addl)); toast('به لایتنر اضافه شد'); render(); });
   el.querySelectorAll('[data-addw]').forEach(b => b.onclick = e => { e.stopPropagation(); openAddWord(b.dataset.addw); });
@@ -389,7 +392,7 @@ function bindHome(el){
 // ---------- DICTIONARY
 function wordRow(w){
   const b = boxOf(w.id);
-  return `<div class="row" data-word="${esc(w.id)}"><div class="de">${germanHTML(w, true)}</div><div class="fa">${esc(w.fa)}</div>${b?`<span class="badge">جعبه ${b}</span>`:''}</div>`;
+  return `<div class="row" data-word="${esc(w.id)}"><div class="de">${germanHTML(w, true)}</div><div class="fa">${esc(w.fa)}</div>${b?`<span class="badge">جعبه ${b}</span>`:''}<button data-info="${esc(w.id)}" aria-label="جزئیات واژه" style="background:none;border:0;color:var(--accent);font-size:20px;padding:4px 6px;cursor:pointer">ⓘ</button></div>`;
 }
 const activeSite = () => sites.find(s => s.id === siteID) || sites[0];
 const siteURL = (s, t) => s ? s.template.replace('{word}', encodeURIComponent(t.trim())) : null;
@@ -739,4 +742,3 @@ function startReview(){
 
 render();
 </script>
-</body></html>
